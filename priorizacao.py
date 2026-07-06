@@ -17,7 +17,7 @@ tabela_pedidos = pd.DataFrame(dados)
 # 3. Engenharia de Produção: Tempo Fixo (Setup) vs Tempo Unitário (por peça)
 # Você pode ajustar esses números em minutos como achar melhor para a realidade da loja!
 regras_tempos = {
-    'Cartão de Visita':       {'fixo': 30, 'unitario': 0},    # 30 min fixos para criar a arte/ajustar o corte. Imprimir 10 ou 100 é o mesmo tempo.
+    'Cartão de Visita':       {'fixo': 30, 'unitario': 0.5},    # 30 min fixos para criar a arte/ajustar o corte. Imprimir 10 ou 100 é o mesmo tempo.
     'Impressão':              {'fixo': 5,  'unitario': 0.1},  # 5 min para abrir o arquivo + 6 segundos (0.1 min) por folha impressa.
     'Convite':                {'fixo': 60, 'unitario': 2},    # 60 min de design + 2 min por unidade para dobrar e colar o laço.
     'Caneca':                 {'fixo': 0,  'unitario': 40},   # 40 min por caneca na prensa (produção linear).
