@@ -1,14 +1,11 @@
 name: Atualizacao Automatica da Fila
 
 on:
+  workflow_dispatch: # Mantém o botão manual ativado para quando você quiser forçar a atualização
   schedule:
-    # O servidor usa o horário de Londres (UTC), que é 3 horas a mais que o Brasil.
-    # 11:00 UTC = 08:00 BRT
-    # 15:00 UTC = 12:00 BRT
-    # 21:00 UTC = 18:00 BRT
-    - cron: '0 11,15,21 * * *'
-  workflow_dispatch: # Isso cria um botão para você rodar na hora que quiser testar
-
+    # Roda no minuto 0 de cada hora, das 10h às 23h e das 00h às 02h (UTC)
+    # Isso equivale exatamente das 07:00 às 23:00 no horário de Brasília!
+    - cron: '0 0-2,10-23 * * *'
 jobs:
   atualizar_fila:
     runs-on: ubuntu-latest
