@@ -36,11 +36,11 @@ nota_interna = tabela_pedidos['Tempo_Producao_Minutos'] / tabela_pedidos['Dias_P
 
 def definir_status(nota):
     if nota >= 30:
-        return '🚨 URGENTE MÁXIMO'
+        return '🚨 URGENTE'
     elif nota >= 15:
         return '⚠️ Prioridade'
     else:
-        return '✅ Tem Tempo'
+        return '✅ Em dia'
 
 tabela_pedidos['Status_Urgencia'] = nota_interna.apply(definir_status)
 
