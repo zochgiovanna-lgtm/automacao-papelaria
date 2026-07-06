@@ -1,0 +1,31 @@
+name: Atualizacao Automatica da Fila
+
+on:
+  schedule:
+    # O servidor usa o horário de Londres (UTC), que é 3 horas a mais que o Brasil.
+    # 11:00 UTC = 08:00 BRT
+    # 15:00 UTC = 12:00 BRT
+    # 21:00 UTC = 18:00 BRT
+    - cron: '0 11,15,21 * * *'
+  workflow_dispatch: # Isso cria um botão para você rodar na hora que quiser testar
+
+jobs:
+  atualizar_fila:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar arquivos do repositorio
+        uses: actions/checkout@v3
+
+      - name: Preparar o ambiente Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Instalar as ferramentas
+        run: |
+          pip install gspread pandas numpy
+
+      - name: Rodar o calculo da fila
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        run: python priorizacao.py
