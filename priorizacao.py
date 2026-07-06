@@ -14,29 +14,38 @@ aba_origem = planilha.worksheet('Página1')
 dados = aba_origem.get_all_records()
 tabela_pedidos = pd.DataFrame(dados)
 
-# 3. Dicionário com os tempos de produção BASE (por unidade ou lote)
-tempos_produtos = {
-    'Cartão de Visita': 30,
-    'Caneca': 40,
-    'Convite': 60,
-    'Topo de Bolo': 90,
-    'Agenda': 300,
-    'Camiseta': 20,       
-    'Impressão': 5,
-    'Balão Bubble Elaborado': 130
+# 3. Engenharia de Produção: Tempo Fixo (Setup) vs Tempo Unitário (por peça)
+# Você pode ajustar esses números em minutos como achar melhor para a realidade da loja!
+regras_tempos = {
+    'Cartão de Visita':       {'fixo': 30, 'unitario': 0},    # 30 min fixos para criar a arte/ajustar o corte. Imprimir 10 ou 100 é o mesmo tempo.
+    'Impressão':              {'fixo': 5,  'unitario': 0.1},  # 5 min para abrir o arquivo + 6 segundos (0.1 min) por folha impressa.
+    'Convite':                {'fixo': 60, 'unitario': 2},    # 60 min de design + 2 min por unidade para dobrar e colar o laço.
+    'Caneca':                 {'fixo': 0,  'unitario': 40},   # 40 min por caneca na prensa (produção linear).
+    'Agenda':                 {'fixo': 0,  'unitario': 300},  # 5 horas por agenda (trabalho manual longo).
+    'Camiseta':               {'fixo': 0,  'unitario': 20},   # 20 min por camiseta na prensa térmica.
+    'Topo de Bolo':           {'fixo': 45, 'unitario': 15},   # 45 min criando o tema + 15 min montando cada unidade.
+    'Balão Bubble Elaborado': {'fixo': 0,  'unitario': 130}   # 130 min por balão personalizado.
 }
 
 # 4. Tratamento de Segurança das Colunas Numéricas
-# Garante que os dias para entrega são números válidos
 tabela_pedidos['Dias_Para_Entrega'] = pd.to_numeric(tabela_pedidos['Dias_Para_Entrega'], errors='coerce').fillna(1)
 tabela_pedidos['Dias_Para_Entrega'] = tabela_pedidos['Dias_Para_Entrega'].replace(0, 1)
 
-# Garante que a quantidade é um número válido (se estiver vazio, vira 1)
 tabela_pedidos['Quantidade'] = pd.to_numeric(tabela_pedidos['Quantidade'], errors='coerce').fillna(1)
 tabela_pedidos['Quantidade'] = tabela_pedidos['Quantidade'].replace(0, 1)
 
-# 5. Cálculo do Tempo Total (Tempo Base x Quantidade)
-tabela_pedidos['Tempo_Total_Minutos'] = tabela_pedidos['Produto'].map(tempos_produtos) * tabela_pedidos['Quantidade']
+# 5. Função matemática para calcular o tempo real com base no comportamento do produto
+def calcular_tempo_real(linha):
+    produto = linha['Produto']
+    qtd = linha['Quantidade']
+    
+    if produto in regras_tempos:
+        tempo_fixo = regras_tempos[produto]['fixo']
+        tempo_unitario = regras_tempos[produto]['unitario']
+        return tempo_fixo + (tempo_unitario * qtd)
+    return 15 # Tempo padrão caso o produto não seja mapeado
+
+tabela_pedidos['Tempo_Total_Minutos'] = tabela_pedidos.apply(calcular_tempo_real, axis=1)
 
 # 6. Cálculo da Urgência
 nota_interna = tabela_pedidos['Tempo_Total_Minutos'] / tabela_pedidos['Dias_Para_Entrega']
@@ -55,7 +64,6 @@ tabela_pedidos['Status_Urgencia'] = nota_interna.apply(definir_status)
 tabela_pedidos['_nota_oculta'] = nota_interna
 tabela_organizada = tabela_pedidos.sort_values(by='_nota_oculta', ascending=False)
 
-# Adicionamos a quantidade e o tempo total na folha final de prioridades
 colunas_finais = ['Cliente_ID', 'Produto', 'Quantidade', 'Dias_Para_Entrega', 'Tempo_Total_Minutos', 'Status_Urgencia']
 tabela_final_sheets = tabela_organizada[colunas_finais]
 
@@ -69,9 +77,4 @@ except:
 tabela_para_enviar = [tabela_final_sheets.columns.values.tolist()] + tabela_final_sheets.values.tolist()
 aba_destino.update(tabela_para_enviar)
 
-print("Planilha de prioridades atualizada com sucesso levando em conta as quantidades!")
-
-tabela_para_enviar = [tabela_final_sheets.columns.values.tolist()] + tabela_final_sheets.values.tolist()
-aba_destino.update(tabela_para_enviar)
-
-print("Planilha atualizada com sucesso pelo servidor em nuvem!")
+print("Planilha atualizada com sucesso usando lógica de tempos industriais (Setup vs Unitário)!")
