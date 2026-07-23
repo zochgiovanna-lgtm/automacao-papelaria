@@ -44,9 +44,9 @@ regras_tempos = {
     'Flay Simples':                     {'fixo': 0, 'unitario': 10},
     'Plastificação':                    {'fixo': 0, 'unitario': 10},
     'Reforma Agenda Escolar':           {'fixo': 0, 'unitario': 30},
-    'Convite Casamento':                {'fixo': 0, 'unitario': 4320},
+    'Convite Casamento':                {'fixo': 4320, 'unitario': 0},
     'Corte Letras Color Pluss':         {'fixo': 0, 'unitario': 30},
-    'Comanda':                          {'fixo': 0, 'unitario': 4320},
+    'Comanda':                          {'fixo': 4320, 'unitario': 0},
     'Apostila com Impressão':           {'fixo': 0, 'unitario': 240},
     'Envelope com Vale Presente':       {'fixo': 0, 'unitario': 30}
 }
