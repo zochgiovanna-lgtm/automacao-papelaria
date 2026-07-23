@@ -14,9 +14,14 @@ aba_origem = planilha.worksheet('Página1')
 dados = aba_origem.get_all_records()
 tabela_pedidos = pd.DataFrame(dados)
 
+# ==========================================
+# NOVO: Filtro Anti-Linhas Fantasmas
+# Remove qualquer linha onde a coluna 'Cliente_ID' esteja vazia
+tabela_pedidos = tabela_pedidos[tabela_pedidos['Cliente_ID'].astype(str).str.strip() != '']
+# ==========================================
+
 # 3. Engenharia de Produção
 regras_tempos = {
-    # Itens originais mantidos:
     'Cartão de Visita':                 {'fixo': 30, 'unitario': 0.5},
     'Impressão':                        {'fixo': 5,  'unitario': 0.1},
     'Caneca':                           {'fixo': 0,  'unitario': 40},
@@ -24,41 +29,32 @@ regras_tempos = {
     'Camiseta':                         {'fixo': 0,  'unitario': 20},
     'Topo de Bolo':                     {'fixo': 45, 'unitario': 15},
     'Balão Bubble Elaborado':           {'fixo': 0,  'unitario': 130},
-    
-    # Novos itens adicionados (convertidos para minutos):
     'Papel Adesivo com Corte':          {'fixo': 0, 'unitario': 5},
     'Crachá Simples com Plastificação': {'fixo': 0, 'unitario': 15},
     'Convite Simples':                  {'fixo': 0, 'unitario': 20},
-    'Convite Elaborado com Corte':      {'fixo': 0, 'unitario': 60},   # Provisório
-    'Caixa Padrinho':                   {'fixo': 0, 'unitario': 60},   # 1 hora
+    'Convite Elaborado com Corte':      {'fixo': 0, 'unitario': 60},
+    'Caixa Padrinho':                   {'fixo': 0, 'unitario': 60},
     'Card Simples':                     {'fixo': 0, 'unitario': 5},
-    'Etiqueta Roupa':                   {'fixo': 0, 'unitario': 60},   # 1 hora
+    'Etiqueta Roupa':                   {'fixo': 0, 'unitario': 60},
     'Etiqueta Simples sem Laminação':   {'fixo': 0, 'unitario': 30},
     'Aplicação Nome Camiseta':          {'fixo': 0, 'unitario': 30},
-    'Bloco de Pedidos':                 {'fixo': 0, 'unitario': 60},   # 1 hora
-    'Caderneta de Vacina Reforma':      {'fixo': 0, 'unitario': 240},  # 4 horas
-    'Card com Chocolate':               {'fixo': 0, 'unitario': 10},   # Provisório
+    'Bloco de Pedidos':                 {'fixo': 0, 'unitario': 60},
+    'Caderneta de Vacina Reforma':      {'fixo': 0, 'unitario': 240},
+    'Card com Chocolate':               {'fixo': 0, 'unitario': 10},
     'Flay Simples':                     {'fixo': 0, 'unitario': 10},
     'Plastificação':                    {'fixo': 0, 'unitario': 10},
     'Reforma Agenda Escolar':           {'fixo': 0, 'unitario': 30},
-    'Convite Casamento':                {'fixo': 0, 'unitario': 4320}, # 3 dias (24h)
+    'Convite Casamento':                {'fixo': 0, 'unitario': 4320},
     'Corte Letras Color Pluss':         {'fixo': 0, 'unitario': 30},
-    'Comanda':                          {'fixo': 0, 'unitario': 4320}, # 3 dias (24h)
-    'Apostila com Impressão':           {'fixo': 0, 'unitario': 240},  # 4 horas
+    'Comanda':                          {'fixo': 0, 'unitario': 4320},
+    'Apostila com Impressão':           {'fixo': 0, 'unitario': 240},
     'Envelope com Vale Presente':       {'fixo': 0, 'unitario': 30}
 }
 
-# 4. A Mágica do Calendário (Calculadora de Dias Automática)
-# Transforma a coluna preenchida pela sua tia em formato oficial de Data
+# 4. A Mágica do Calendário
 tabela_pedidos['Data_Entrega'] = pd.to_datetime(tabela_pedidos['Data_Entrega'], format='%d/%m/%Y', errors='coerce')
-
-# O robô descobre que dia é "hoje"
 hoje = pd.Timestamp.today().normalize()
-
-# O robô faz a conta de subtração para descobrir quantos dias faltam
 tabela_pedidos['Dias_Para_Entrega'] = (tabela_pedidos['Data_Entrega'] - hoje).dt.days
-
-# Proteção: se o pedido for para hoje, estiver atrasado, ou se ela esquecer a data, a máquina assume 1 dia (Urgência)
 tabela_pedidos['Dias_Para_Entrega'] = tabela_pedidos['Dias_Para_Entrega'].fillna(1)
 tabela_pedidos['Dias_Para_Entrega'] = tabela_pedidos['Dias_Para_Entrega'].apply(lambda x: 1 if x <= 0 else x)
 
@@ -66,7 +62,7 @@ tabela_pedidos['Dias_Para_Entrega'] = tabela_pedidos['Dias_Para_Entrega'].apply(
 tabela_pedidos['Quantidade'] = pd.to_numeric(tabela_pedidos['Quantidade'], errors='coerce').fillna(1)
 tabela_pedidos['Quantidade'] = tabela_pedidos['Quantidade'].replace(0, 1)
 
-# 5. Função matemática para calcular o tempo real de produção
+# 5. Função matemática para calcular o tempo real
 def calcular_tempo_real(linha):
     produto = linha['Produto']
     qtd = linha['Quantidade']
@@ -93,17 +89,15 @@ def definir_status(nota):
 tabela_pedidos['Status_Urgencia'] = nota_interna.apply(definir_status)
 
 # 7. Organização por Prioridade
-# Devolve a data para o formato de texto bonito "DD/MM/AAAA" para exibir na planilha
 tabela_pedidos['Data_Texto'] = tabela_pedidos['Data_Entrega'].dt.strftime('%d/%m/%Y').fillna('Sem Data')
 tabela_pedidos['_nota_oculta'] = nota_interna
 tabela_organizada = tabela_pedidos.sort_values(by='_nota_oculta', ascending=False)
 
-# Organiza as colunas de saída trocando a contagem de dias pela Data final
 colunas_finais = ['Cliente_ID', 'Produto', 'Quantidade', 'Data_Texto', 'Tempo_Total_Minutos', 'Status_Urgencia']
 tabela_final_sheets = tabela_organizada[colunas_finais]
 tabela_final_sheets = tabela_final_sheets.rename(columns={'Data_Texto': 'Data_Entrega'})
 
-# 8. Enviar os dados de volta para a aba Fila_Prioridade
+# 8. Enviar os dados de volta
 try:
     aba_destino = planilha.worksheet('Fila_Prioridade')
     aba_destino.clear() 
@@ -113,4 +107,4 @@ except:
 tabela_para_enviar = [tabela_final_sheets.columns.values.tolist()] + tabela_final_sheets.values.tolist()
 aba_destino.update(tabela_para_enviar)
 
-print("Planilha atualizada usando leitura inteligente de calendário!")
+print("Planilha atualizada sem as linhas fantasmas!")
