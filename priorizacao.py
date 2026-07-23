@@ -14,16 +14,38 @@ aba_origem = planilha.worksheet('Página1')
 dados = aba_origem.get_all_records()
 tabela_pedidos = pd.DataFrame(dados)
 
-# 3. Engenharia de Produção (com o tempo de Cartão de Visita ajustado para 0.5)
+# 3. Engenharia de Produção
 regras_tempos = {
-    'Cartão de Visita':       {'fixo': 30, 'unitario': 0.5},
-    'Impressão':              {'fixo': 5,  'unitario': 0.1},
-    'Convite':                {'fixo': 60, 'unitario': 2},
-    'Caneca':                 {'fixo': 0,  'unitario': 40},
-    'Agenda':                 {'fixo': 0,  'unitario': 300},
-    'Camiseta':               {'fixo': 0,  'unitario': 20},
-    'Topo de Bolo':           {'fixo': 45, 'unitario': 15},
-    'Balão Bubble Elaborado': {'fixo': 0,  'unitario': 130}
+    # Itens originais mantidos:
+    'Cartão de Visita':                 {'fixo': 30, 'unitario': 0.5},
+    'Impressão':                        {'fixo': 5,  'unitario': 0.1},
+    'Caneca':                           {'fixo': 0,  'unitario': 40},
+    'Agenda':                           {'fixo': 0,  'unitario': 300},
+    'Camiseta':                         {'fixo': 0,  'unitario': 20},
+    'Topo de Bolo':                     {'fixo': 45, 'unitario': 15},
+    'Balão Bubble Elaborado':           {'fixo': 0,  'unitario': 130},
+    
+    # Novos itens adicionados (convertidos para minutos):
+    'Papel Adesivo com Corte':          {'fixo': 0, 'unitario': 5},
+    'Crachá Simples com Plastificação': {'fixo': 0, 'unitario': 15},
+    'Convite Simples':                  {'fixo': 0, 'unitario': 20},
+    'Convite Elaborado com Corte':      {'fixo': 0, 'unitario': 60},   # Provisório
+    'Caixa Padrinho':                   {'fixo': 0, 'unitario': 60},   # 1 hora
+    'Card Simples':                     {'fixo': 0, 'unitario': 5},
+    'Etiqueta Roupa':                   {'fixo': 0, 'unitario': 60},   # 1 hora
+    'Etiqueta Simples sem Laminação':   {'fixo': 0, 'unitario': 30},
+    'Aplicação Nome Camiseta':          {'fixo': 0, 'unitario': 30},
+    'Bloco de Pedidos':                 {'fixo': 0, 'unitario': 60},   # 1 hora
+    'Caderneta de Vacina Reforma':      {'fixo': 0, 'unitario': 240},  # 4 horas
+    'Card com Chocolate':               {'fixo': 0, 'unitario': 10},   # Provisório
+    'Flay Simples':                     {'fixo': 0, 'unitario': 10},
+    'Plastificação':                    {'fixo': 0, 'unitario': 10},
+    'Reforma Agenda Escolar':           {'fixo': 0, 'unitario': 30},
+    'Convite Casamento':                {'fixo': 0, 'unitario': 4320}, # 3 dias (24h)
+    'Corte Letras Color Pluss':         {'fixo': 0, 'unitario': 30},
+    'Comanda':                          {'fixo': 0, 'unitario': 4320}, # 3 dias (24h)
+    'Apostila com Impressão':           {'fixo': 0, 'unitario': 240},  # 4 horas
+    'Envelope com Vale Presente':       {'fixo': 0, 'unitario': 30}
 }
 
 # 4. A Mágica do Calendário (Calculadora de Dias Automática)
