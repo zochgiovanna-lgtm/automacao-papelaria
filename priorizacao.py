@@ -15,12 +15,21 @@ dados = aba_origem.get_all_records()
 tabela_pedidos = pd.DataFrame(dados)
 
 # ==========================================
-# NOVO: Filtro Anti-Linhas Fantasmas
-# Remove qualquer linha onde a coluna 'Cliente_ID' esteja vazia
-tabela_pedidos = tabela_pedidos[tabela_pedidos['Cliente_ID'].astype(str).str.strip() != '']
+# 3. GARANTIA DE COLUNAS EXISTENTES
+# Isso impede o robô de quebrar caso falte alguma coluna na leitura
+colunas_necessarias = ['Data_Pedido', 'Celular', 'Concluido', 'Observações']
+for col in colunas_necessarias:
+    if col not in tabela_pedidos.columns:
+        tabela_pedidos[col] = ''
 # ==========================================
 
-# 3. Engenharia de Produção
+# 4. Filtros de Limpeza Inteligente
+# Remove linhas fantasmas (sem cliente)
+tabela_pedidos = tabela_pedidos[tabela_pedidos['Cliente_ID'].astype(str).str.strip() != '']
+# Tira da fila os pedidos concluídos (lê 'PRONTO', 'SIM', ou a caixinha de seleção marcada como 'TRUE')
+tabela_pedidos = tabela_pedidos[~tabela_pedidos['Concluido'].astype(str).str.upper().isin(['TRUE', 'SIM', 'VERDADEIRO', 'PRONTO'])] 
+
+# 5. Engenharia de Produção (com os produtos provisórios que ela inventou)
 regras_tempos = {
     'Cartão de Visita':                 {'fixo': 30, 'unitario': 0.5},
     'Impressão':                        {'fixo': 5,  'unitario': 0.1},
@@ -48,34 +57,45 @@ regras_tempos = {
     'Corte Letras Color Pluss':         {'fixo': 0, 'unitario': 30},
     'Comanda':                          {'fixo': 4320, 'unitario': 0},
     'Apostila com Impressão':           {'fixo': 0, 'unitario': 240},
-    'Envelope com Vale Presente':       {'fixo': 0, 'unitario': 30}
+    'Envelope com Vale Presente':       {'fixo': 0, 'unitario': 30},
+    'Foto Polaroid':                    {'fixo': 0, 'unitario': 5},
+    'Foto Polaroid Imã de Geladeira':   {'fixo': 0, 'unitario': 5},
+    'estampa dif':                      {'fixo': 0, 'unitario': 10},
+    'Adesivi de vinil':                 {'fixo': 0, 'unitario': 5},
+    'TAG AGRADECIMENTO':                {'fixo': 0, 'unitario': 5},
+    'IMPRESSÃO DE CERTIFICADO':         {'fixo': 0, 'unitario': 5},
+    'Tags Adesivo Personalizados':      {'fixo': 0, 'unitario': 10},
+    'Foto polaroid de Geladeira':       {'fixo': 0, 'unitario': 5}
 }
 
-# 4. A Mágica do Calendário
-tabela_pedidos['Data_Entrega'] = pd.to_datetime(tabela_pedidos['Data_Entrega'], format='%d/%m/%Y', errors='coerce')
+# 6. A Mágica do Calendário
+tabela_pedidos['Data_Calc'] = pd.to_datetime(tabela_pedidos['Data_Entrega'], format='%d/%m/%Y', errors='coerce')
 hoje = pd.Timestamp.today().normalize()
-tabela_pedidos['Dias_Para_Entrega'] = (tabela_pedidos['Data_Entrega'] - hoje).dt.days
+tabela_pedidos['Dias_Para_Entrega'] = (tabela_pedidos['Data_Calc'] - hoje).dt.days
 tabela_pedidos['Dias_Para_Entrega'] = tabela_pedidos['Dias_Para_Entrega'].fillna(1)
 tabela_pedidos['Dias_Para_Entrega'] = tabela_pedidos['Dias_Para_Entrega'].apply(lambda x: 1 if x <= 0 else x)
 
-# Proteção da Quantidade
-tabela_pedidos['Quantidade'] = pd.to_numeric(tabela_pedidos['Quantidade'], errors='coerce').fillna(1)
-tabela_pedidos['Quantidade'] = tabela_pedidos['Quantidade'].replace(0, 1)
+# 7. Proteção Master da Quantidade (Caça-Números)
+# Se ela escrever "24 estampas", o robô arranca o texto e fica só com o "24"
+tabela_pedidos['Quantidade_Limpa'] = tabela_pedidos['Quantidade'].astype(str).str.extract(r'(\d+)')[0]
+tabela_pedidos['Quantidade_Limpa'] = pd.to_numeric(tabela_pedidos['Quantidade_Limpa'], errors='coerce').fillna(1)
+tabela_pedidos['Quantidade_Limpa'] = tabela_pedidos['Quantidade_Limpa'].replace(0, 1)
 
-# 5. Função matemática para calcular o tempo real
+# 8. Função de Tempo (Ignora se ela usar maiúsculas ou minúsculas)
 def calcular_tempo_real(linha):
-    produto = linha['Produto']
-    qtd = linha['Quantidade']
+    produto = str(linha['Produto']).strip().lower()
+    qtd = linha['Quantidade_Limpa']
     
-    if produto in regras_tempos:
-        tempo_fixo = regras_tempos[produto]['fixo']
-        tempo_unitario = regras_tempos[produto]['unitario']
-        return tempo_fixo + (tempo_unitario * qtd)
+    for chave_regra in regras_tempos:
+        if chave_regra.lower() == produto:
+            tempo_fixo = regras_tempos[chave_regra]['fixo']
+            tempo_unitario = regras_tempos[chave_regra]['unitario']
+            return tempo_fixo + (tempo_unitario * qtd)
     return 15
 
 tabela_pedidos['Tempo_Total_Minutos'] = tabela_pedidos.apply(calcular_tempo_real, axis=1)
 
-# 6. Cálculo da Urgência
+# 9. Cálculo da Urgência
 nota_interna = tabela_pedidos['Tempo_Total_Minutos'] / tabela_pedidos['Dias_Para_Entrega']
 
 def definir_status(nota):
@@ -88,16 +108,16 @@ def definir_status(nota):
 
 tabela_pedidos['Status_Urgencia'] = nota_interna.apply(definir_status)
 
-# 7. Organização por Prioridade
-tabela_pedidos['Data_Texto'] = tabela_pedidos['Data_Entrega'].dt.strftime('%d/%m/%Y').fillna('Sem Data')
+# 10. Organização por Prioridade para imprimir na planilha
+tabela_pedidos['Quantidade'] = tabela_pedidos['Quantidade_Limpa'] # Passa o número limpo para a versão final
 tabela_pedidos['_nota_oculta'] = nota_interna
 tabela_organizada = tabela_pedidos.sort_values(by='_nota_oculta', ascending=False)
 
-colunas_finais = ['Cliente_ID', 'Produto', 'Quantidade', 'Data_Texto', 'Tempo_Total_Minutos', 'Status_Urgencia']
+# Essa linha dita exatamente quais colunas vão aparecer na Fila_Prioridade e em qual ordem
+colunas_finais = ['Data_Pedido', 'Cliente_ID', 'Celular', 'Produto', 'Quantidade', 'Observações', 'Data_Entrega', 'Tempo_Total_Minutos', 'Status_Urgencia']
 tabela_final_sheets = tabela_organizada[colunas_finais]
-tabela_final_sheets = tabela_final_sheets.rename(columns={'Data_Texto': 'Data_Entrega'})
 
-# 8. Enviar os dados de volta
+# 11. Enviar os dados de volta para a Fila
 try:
     aba_destino = planilha.worksheet('Fila_Prioridade')
     aba_destino.clear() 
@@ -107,4 +127,4 @@ except:
 tabela_para_enviar = [tabela_final_sheets.columns.values.tolist()] + tabela_final_sheets.values.tolist()
 aba_destino.update(tabela_para_enviar)
 
-print("Planilha atualizada sem as linhas fantasmas!")
+print("Sistema processado com sucesso! Filtros e proteções ativados.")
