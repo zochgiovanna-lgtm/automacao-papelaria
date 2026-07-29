@@ -41,7 +41,7 @@ tabela_final_historico = tabela_concluidos[colunas_historico]
 try:
     aba_historico = planilha.worksheet('Historico_Entregas')
     try:
-        aba_historico.batch_clear(['A2:H1000'])
+        aba_historico.batch_clear(['A3:H1000'])
     except:
         pass
 except:
@@ -49,6 +49,13 @@ except:
 
 dados_historico = [tabela_final_historico.columns.values.tolist()] + tabela_final_historico.values.tolist()
 aba_historico.update('A2', dados_historico)
+
+# Estilizar o cabeçalho do Histórico na linha 2 (Fundo Rosa e Texto Centralizado)
+aba_historico.format('A2:H2', {
+    'backgroundColor': {'red': 0.92, 'green': 0.6, 'blue': 0.67},
+    'textFormat': {'bold': True, 'foregroundColor': {'red': 0, 'green': 0, 'blue': 0}},
+    'horizontalAlignment': 'CENTER'
+})
 
 
 # ==========================================
@@ -135,11 +142,11 @@ else:
 colunas_finais = ['Data_Pedido', 'Cliente_ID', 'Celular', 'Produto', 'Quantidade', 'Observações', 'Data_Entrega', 'Tempo_Total_Minutos', 'Status_Urgencia']
 tabela_final_sheets = tabela_organizada[colunas_finais] if not tabela_organizada.empty else pd.DataFrame(columns=colunas_finais)
 
-# Garantir que a aba Fila_Prioridade existe, limpando APENAS a área da tabela (A a I)
+# Garantir que a aba Fila_Prioridade existe, limpando APENAS os dados antigos da tabela (A3 para baixo)
 try:
     aba_destino = planilha.worksheet('Fila_Prioridade')
     try:
-        aba_destino.batch_clear(['A2:I1000'])
+        aba_destino.batch_clear(['A3:I1000'])
     except:
         pass
 except:
@@ -149,4 +156,11 @@ tabela_para_enviar = [tabela_final_sheets.columns.values.tolist()] + tabela_fina
 aba_destination_data = tabela_para_enviar if not tabela_final_sheets.empty else [colunas_finais]
 aba_destino.update('A2', aba_destination_data)
 
-print("Processamento concluído com sucesso! Dados atualizados preservando as cores e formatações.")
+# Estilizar o cabeçalho da Fila de Prioridade na linha 2 (Fundo Rosa e Texto Centralizado)
+aba_destino.format('A2:I2', {
+    'backgroundColor': {'red': 0.92, 'green': 0.6, 'blue': 0.67},
+    'textFormat': {'bold': True, 'foregroundColor': {'red': 0, 'green': 0, 'blue': 0}},
+    'horizontalAlignment': 'CENTER'
+})
+
+print("Processamento concluído com sucesso! Linha 1 preservada com a logo e linha 2 estilizada em rosa.")
