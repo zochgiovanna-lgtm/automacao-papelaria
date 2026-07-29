@@ -8,7 +8,7 @@ import numpy as np
 credenciais_json = json.loads(os.environ["GOOGLE_CREDENTIALS"])
 gc = gspread.service_account_from_dict(credenciais_json)
 
-# 2. Abrir a planilha (Ajustado para ler a linha 2 por causa da logo/banner na linha 1)
+# 2. Abrir a planilha (Lendo a linha 2 por causa da logo/banner na linha 1)
 planilha = gc.open('Pedidos_Papelaria')
 aba_origem = planilha.worksheet('Página1')
 dados = aba_origem.get_all_records(head=2)
@@ -143,4 +143,11 @@ tabela_para_enviar = [tabela_final_sheets.columns.values.tolist()] + tabela_fina
 aba_destination_data = tabela_para_enviar if not tabela_final_sheets.empty else [colunas_finais]
 aba_destino.update('A1', aba_destination_data)
 
-print("Processamento concluído com sucesso! Histórico e Fila atualizados.")
+# Estilização automática do cabeçalho da Fila de Prioridade (Rosa chiclete combinando com a Página1)
+aba_destino.format('A1:I1', {
+    'backgroundColor': {'red': 0.92, 'green': 0.6, 'blue': 0.67},
+    'textFormat': {'bold': True, 'foregroundColor': {'red': 0, 'green': 0, 'blue': 0}},
+    'horizontalAlignment': 'CENTER'
+})
+
+print("Processamento concluído com sucesso! Histórico e Fila atualizados e estilizados.")
