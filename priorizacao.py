@@ -52,30 +52,14 @@ dados_historico = tabela_final_historico.values.tolist()
 if dados_historico:
     aba_historico.update('A3', dados_historico)
 
-# AUTOMATIZAÇÃO DA CAIXINHA DE ENTREGUES (J3 a L5 mescladas com emoji 🎉 e cor)
+# AUTOMATIZAÇÃO DA CONTAGEM: Atualiza apenas o texto na célula J1 (preservando totalmente suas cores e mesclagem)
 total_entregues = len(tabela_concluidos)
 texto_contador = f"🎉 Pedidos Entregues: {total_entregues}"
 
 try:
-    # Insere o texto na célula J3
-    aba_historico.update('J3', [[texto_contador]])
-    
-    # Mescla as colunas J, K, L e linhas 3 a 5 para formar o bloco/caixinha
-    aba_historico.merge('J3:L5', merge_type='MERGE_ALL')
-    
-    # Formata a caixinha (Fundo rosa escuro/mauve, texto branco em negrito, centralizado)
-    aba_historico.format('J3:L5', {
-        'backgroundColor': {'red': 0.65, 'green': 0.38, 'blue': 0.48},
-        'textFormat': {
-            'bold': True, 
-            'foregroundColor': {'red': 1.0, 'green': 1.0, 'blue': 1.0},
-            'fontSize': 11
-        },
-        'horizontalAlignment': 'CENTER',
-        'verticalAlignment': 'MIDDLE'
-    })
+    aba_historico.update('J1', [[texto_contador]])
 except Exception as e:
-    print(f"Erro ao atualizar caixinha de entregues: {e}")
+    print(f"Erro ao atualizar contador: {e}")
 
 
 # ==========================================
@@ -177,4 +161,4 @@ dados_prioridade = tabela_final_sheets.values.tolist()
 if dados_prioridade:
     aba_destino.update('A3', dados_prioridade)
 
-print("Processamento concluído com sucesso! Caixinha formatada, mesclada com 🎉 e histórico atualizado.")
+print("Processamento concluído com sucesso!")
