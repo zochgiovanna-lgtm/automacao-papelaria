@@ -37,11 +37,11 @@ for col in colunas_historico:
         tabela_concluidos[col] = ''
 tabela_final_historico = tabela_concluidos[colunas_historico]
 
-# Garantir que a aba Historico_Entregas existe, sem apagá-la (protegendo a linha 1 para a logo)
+# Garantir que a aba Historico_Entregas existe, limpando APENAS a área da tabela (A a H)
 try:
     aba_historico = planilha.worksheet('Historico_Entregas')
     try:
-        aba_historico.batch_clear(['A2:Z1000'])
+        aba_historico.batch_clear(['A2:H1000'])
     except:
         pass
 except:
@@ -49,13 +49,6 @@ except:
 
 dados_historico = [tabela_final_historico.columns.values.tolist()] + tabela_final_historico.values.tolist()
 aba_historico.update('A2', dados_historico)
-
-# Estilizar cabeçalho do Histórico na linha 2
-aba_historico.format('A2:H2', {
-    'backgroundColor': {'red': 0.92, 'green': 0.6, 'blue': 0.67},
-    'textFormat': {'bold': True, 'foregroundColor': {'red': 0, 'green': 0, 'blue': 0}},
-    'horizontalAlignment': 'CENTER'
-})
 
 
 # ==========================================
@@ -142,11 +135,11 @@ else:
 colunas_finais = ['Data_Pedido', 'Cliente_ID', 'Celular', 'Produto', 'Quantidade', 'Observações', 'Data_Entrega', 'Tempo_Total_Minutos', 'Status_Urgencia']
 tabela_final_sheets = tabela_organizada[colunas_finais] if not tabela_organizada.empty else pd.DataFrame(columns=colunas_finais)
 
-# Garantir que a aba Fila_Prioridade existe, sem apagá-la (protegendo a linha 1 para a logo)
+# Garantir que a aba Fila_Prioridade existe, limpando APENAS a área da tabela (A a I)
 try:
     aba_destino = planilha.worksheet('Fila_Prioridade')
     try:
-        aba_destino.batch_clear(['A2:Z1000'])
+        aba_destino.batch_clear(['A2:I1000'])
     except:
         pass
 except:
@@ -156,11 +149,4 @@ tabela_para_enviar = [tabela_final_sheets.columns.values.tolist()] + tabela_fina
 aba_destination_data = tabela_para_enviar if not tabela_final_sheets.empty else [colunas_finais]
 aba_destino.update('A2', aba_destination_data)
 
-# Estilização automática do cabeçalho da Fila de Prioridade na linha 2
-aba_destino.format('A2:I2', {
-    'backgroundColor': {'red': 0.92, 'green': 0.6, 'blue': 0.67},
-    'textFormat': {'bold': True, 'foregroundColor': {'red': 0, 'green': 0, 'blue': 0}},
-    'horizontalAlignment': 'CENTER'
-})
-
-print("Processamento concluído com sucesso! Histórico e Fila atualizados preservando a linha 1.")
+print("Processamento concluído com sucesso! Dados atualizados preservando as cores e formatações.")
