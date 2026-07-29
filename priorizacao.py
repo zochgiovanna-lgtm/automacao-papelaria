@@ -37,19 +37,21 @@ for col in colunas_historico:
         tabela_concluidos[col] = ''
 tabela_final_historico = tabela_concluidos[colunas_historico]
 
-# Recriar aba Histórico do zero para limpar qualquer formatação antiga
+# Garantir que a aba Historico_Entregas existe, sem apagá-la (protegendo a linha 1 para a logo)
 try:
-    aba_antiga_hist = planilha.worksheet('Historico_Entregas')
-    planilha.del_worksheet(aba_antiga_hist)
+    aba_historico = planilha.worksheet('Historico_Entregas')
+    try:
+        aba_historico.batch_clear(['A2:Z1000'])
+    except:
+        pass
 except:
-    pass
+    aba_historico = planilha.add_worksheet(title="Historico_Entregas", rows="100", cols="20")
 
-aba_historico = planilha.add_worksheet(title="Historico_Entregas", rows="100", cols="20")
 dados_historico = [tabela_final_historico.columns.values.tolist()] + tabela_final_historico.values.tolist()
-aba_historico.update('A1', dados_historico)
+aba_historico.update('A2', dados_historico)
 
-# Estilizar cabeçalho do Histórico
-aba_historico.format('A1:H1', {
+# Estilizar cabeçalho do Histórico na linha 2
+aba_historico.format('A2:H2', {
     'backgroundColor': {'red': 0.92, 'green': 0.6, 'blue': 0.67},
     'textFormat': {'bold': True, 'foregroundColor': {'red': 0, 'green': 0, 'blue': 0}},
     'horizontalAlignment': 'CENTER'
@@ -140,23 +142,25 @@ else:
 colunas_finais = ['Data_Pedido', 'Cliente_ID', 'Celular', 'Produto', 'Quantidade', 'Observações', 'Data_Entrega', 'Tempo_Total_Minutos', 'Status_Urgencia']
 tabela_final_sheets = tabela_organizada[colunas_finais] if not tabela_organizada.empty else pd.DataFrame(columns=colunas_finais)
 
-# Recriar aba Fila_Prioridade do zero
+# Garantir que a aba Fila_Prioridade existe, sem apagá-la (protegendo a linha 1 para a logo)
 try:
-    aba_antiga_fila = planilha.worksheet('Fila_Prioridade')
-    planilha.del_worksheet(aba_antiga_fila)
+    aba_destino = planilha.worksheet('Fila_Prioridade')
+    try:
+        aba_destino.batch_clear(['A2:Z1000'])
+    except:
+        pass
 except:
-    pass
+    aba_destino = planilha.add_worksheet(title="Fila_Prioridade", rows="100", cols="20")
 
-aba_destino = planilha.add_worksheet(title="Fila_Prioridade", rows="100", cols="20")
 tabela_para_enviar = [tabela_final_sheets.columns.values.tolist()] + tabela_final_sheets.values.tolist()
 aba_destination_data = tabela_para_enviar if not tabela_final_sheets.empty else [colunas_finais]
-aba_destino.update('A1', aba_destination_data)
+aba_destino.update('A2', aba_destination_data)
 
-# Estilização automática do cabeçalho da Fila de Prioridade
-aba_destino.format('A1:I1', {
+# Estilização automática do cabeçalho da Fila de Prioridade na linha 2
+aba_destino.format('A2:I2', {
     'backgroundColor': {'red': 0.92, 'green': 0.6, 'blue': 0.67},
     'textFormat': {'bold': True, 'foregroundColor': {'red': 0, 'green': 0, 'blue': 0}},
     'horizontalAlignment': 'CENTER'
 })
 
-print("Processamento concluído com sucesso! Histórico e Fila recriados, limpos e estilizados.")
+print("Processamento concluído com sucesso! Histórico e Fila atualizados preservando a linha 1.")
