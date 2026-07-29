@@ -37,14 +37,23 @@ for col in colunas_historico:
         tabela_concluidos[col] = ''
 tabela_final_historico = tabela_concluidos[colunas_historico]
 
+# Recriar aba Histórico do zero para limpar qualquer formatação antiga
 try:
-    aba_historico = planilha.worksheet('Historico_Entregas')
-    aba_historico.clear()
+    aba_antiga_hist = planilha.worksheet('Historico_Entregas')
+    planilha.del_worksheet(aba_antiga_hist)
 except:
-    aba_historico = planilha.add_worksheet(title="Historico_Entregas", rows="100", cols="20")
+    pass
 
+aba_historico = planilha.add_worksheet(title="Historico_Entregas", rows="100", cols="20")
 dados_historico = [tabela_final_historico.columns.values.tolist()] + tabela_final_historico.values.tolist()
 aba_historico.update('A1', dados_historico)
+
+# Estilizar cabeçalho do Histórico
+aba_historico.format('A1:H1', {
+    'backgroundColor': {'red': 0.92, 'green': 0.6, 'blue': 0.67},
+    'textFormat': {'bold': True, 'foregroundColor': {'red': 0, 'green': 0, 'blue': 0}},
+    'horizontalAlignment': 'CENTER'
+})
 
 
 # ==========================================
@@ -80,8 +89,6 @@ regras_tempos = {
     'Envelope com Vale Presente':       {'fixo': 0, 'unitario': 30},
     'Foto Polaroid':                    {'fixo': 0, 'unitario': 5},
     'Foto Polaroid Imã de Geladeira':   {'fixo': 0, 'unitario': 5},
-    'estampa dif':                      {'fixo': 0, 'unitario': 10},
-    'Adesivi de vinil':                 {'fixo': 0, 'unitario': 5},
     'TAG AGRADECIMENTO':                {'fixo': 0, 'unitario': 5},
     'IMPRESSÃO DE CERTIFICADO':         {'fixo': 0, 'unitario': 5},
     'Tags Adesivo Personalizados':      {'fixo': 0, 'unitario': 10},
@@ -133,21 +140,23 @@ else:
 colunas_finais = ['Data_Pedido', 'Cliente_ID', 'Celular', 'Produto', 'Quantidade', 'Observações', 'Data_Entrega', 'Tempo_Total_Minutos', 'Status_Urgencia']
 tabela_final_sheets = tabela_organizada[colunas_finais] if not tabela_organizada.empty else pd.DataFrame(columns=colunas_finais)
 
+# Recriar aba Fila_Prioridade do zero
 try:
-    aba_destino = planilha.worksheet('Fila_Prioridade')
-    aba_destino.clear() 
+    aba_antiga_fila = planilha.worksheet('Fila_Prioridade')
+    planilha.del_worksheet(aba_antiga_fila)
 except:
-    aba_destino = planilha.add_worksheet(title="Fila_Prioridade", rows="100", cols="20")
+    pass
 
+aba_destino = planilha.add_worksheet(title="Fila_Prioridade", rows="100", cols="20")
 tabela_para_enviar = [tabela_final_sheets.columns.values.tolist()] + tabela_final_sheets.values.tolist()
 aba_destination_data = tabela_para_enviar if not tabela_final_sheets.empty else [colunas_finais]
 aba_destino.update('A1', aba_destination_data)
 
-# Estilização automática do cabeçalho da Fila de Prioridade (Rosa chiclete combinando com a Página1)
+# Estilização automática do cabeçalho da Fila de Prioridade
 aba_destino.format('A1:I1', {
     'backgroundColor': {'red': 0.92, 'green': 0.6, 'blue': 0.67},
     'textFormat': {'bold': True, 'foregroundColor': {'red': 0, 'green': 0, 'blue': 0}},
     'horizontalAlignment': 'CENTER'
 })
 
-print("Processamento concluído com sucesso! Histórico e Fila atualizados e estilizados.")
+print("Processamento concluído com sucesso! Histórico e Fila recriados, limpos e estilizados.")
