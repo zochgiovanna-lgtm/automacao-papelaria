@@ -8,10 +8,10 @@ import numpy as np
 credenciais_json = json.loads(os.environ["GOOGLE_CREDENTIALS"])
 gc = gspread.service_account_from_dict(credenciais_json)
 
-# 2. Abrir a planilha
+# 2. Abrir a planilha (Ajustado para ler a linha 2 por causa da logo/banner na linha 1)
 planilha = gc.open('Pedidos_Papelaria')
 aba_origem = planilha.worksheet('Página1')
-dados = aba_origem.get_all_records()
+dados = aba_origem.get_all_records(head=2)
 tabela_pedidos = pd.DataFrame(dados)
 
 # 3. GARANTIA DE COLUNAS EXISTENTES
@@ -44,7 +44,7 @@ except:
     aba_historico = planilha.add_worksheet(title="Historico_Entregas", rows="100", cols="20")
 
 dados_historico = [tabela_final_historico.columns.values.tolist()] + tabela_final_historico.values.tolist()
-aba_historico.update(dados_historico)
+aba_historico.update('A1', dados_historico)
 
 
 # ==========================================
@@ -80,6 +80,8 @@ regras_tempos = {
     'Envelope com Vale Presente':       {'fixo': 0, 'unitario': 30},
     'Foto Polaroid':                    {'fixo': 0, 'unitario': 5},
     'Foto Polaroid Imã de Geladeira':   {'fixo': 0, 'unitario': 5},
+    'estampa dif':                      {'fixo': 0, 'unitario': 10},
+    'Adesivi de vinil':                 {'fixo': 0, 'unitario': 5},
     'TAG AGRADECIMENTO':                {'fixo': 0, 'unitario': 5},
     'IMPRESSÃO DE CERTIFICADO':         {'fixo': 0, 'unitario': 5},
     'Tags Adesivo Personalizados':      {'fixo': 0, 'unitario': 10},
@@ -139,6 +141,6 @@ except:
 
 tabela_para_enviar = [tabela_final_sheets.columns.values.tolist()] + tabela_final_sheets.values.tolist()
 aba_destination_data = tabela_para_enviar if not tabela_final_sheets.empty else [colunas_finais]
-aba_destino.update(aba_destination_data)
+aba_destino.update('A1', aba_destination_data)
 
 print("Processamento concluído com sucesso! Histórico e Fila atualizados.")
