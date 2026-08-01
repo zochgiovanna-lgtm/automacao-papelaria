@@ -15,7 +15,7 @@ dados = aba_origem.get_all_records(head=2)
 tabela_pedidos = pd.DataFrame(dados)
 
 # 3. GARANTIA DE COLUNAS EXISTENTES
-colunas_necessarias = ['Data_Pedido', 'Celular', 'Concluido', 'Observações', 'Quantidade']
+colunas_necessarias = ['Data_Pedido', 'Celular', 'Concluido', 'Observações', 'Quantidade', 'Pago']
 for col in colunas_necessarias:
     if col not in tabela_pedidos.columns:
         tabela_pedidos[col] = ''
@@ -31,7 +31,7 @@ tabela_pendentes = tabela_pedidos[~condicao_concluido].copy()
 # ==========================================
 # PARTE A: ATUALIZAR ABA HISTÓRICO DE ENTREGAS
 # ==========================================
-colunas_historico = ['Data_Pedido', 'Cliente_ID', 'Celular', 'Produto', 'Quantidade', 'Observações', 'Data_Entrega', 'Concluido']
+colunas_historico = ['Data_Pedido', 'Cliente_ID', 'Celular', 'Produto', 'Quantidade', 'Observações', 'Data_Entrega', 'Concluido', 'Pago']
 for col in colunas_historico:
     if col not in tabela_concluidos.columns:
         tabela_concluidos[col] = ''
@@ -40,7 +40,7 @@ tabela_final_historico = tabela_concluidos[colunas_historico]
 try:
     aba_historico = planilha.worksheet('Historico_Entregas')
     try:
-        aba_historico.batch_clear(['A3:H1000'])
+        aba_historico.batch_clear(['A3:I1000'])
     except Exception:
         pass
 except gspread.exceptions.WorksheetNotFound:
@@ -140,15 +140,15 @@ if not tabela_pendentes.empty:
     tabela_pendentes['_nota_oculta'] = nota_interna
     tabela_organizada = tabela_pendentes.sort_values(by='_nota_oculta', ascending=False)
 else:
-    tabela_organizada = pd.DataFrame(columns=['Data_Pedido', 'Cliente_ID', 'Celular', 'Produto', 'Quantidade', 'Observações', 'Data_Entrega', 'Tempo_Total_Minutos', 'Status_Urgencia'])
+    tabela_organizada = pd.DataFrame(columns=['Data_Pedido', 'Cliente_ID', 'Celular', 'Produto', 'Quantidade', 'Observações', 'Data_Entrega', 'Tempo_Total_Minutos', 'Status_Urgencia', 'Pago'])
 
-colunas_finais = ['Data_Pedido', 'Cliente_ID', 'Celular', 'Produto', 'Quantidade', 'Observações', 'Data_Entrega', 'Tempo_Total_Minutos', 'Status_Urgencia']
+colunas_finais = ['Data_Pedido', 'Cliente_ID', 'Celular', 'Produto', 'Quantidade', 'Observações', 'Data_Entrega', 'Tempo_Total_Minutos', 'Status_Urgencia', 'Pago']
 tabela_final_sheets = tabela_organizada[colunas_finais] if not tabela_organizada.empty else pd.DataFrame(columns=colunas_finais)
 
 try:
     aba_destino = planilha.worksheet('Fila_Prioridade')
     try:
-        aba_destino.batch_clear(['A3:I1000'])
+        aba_destino.batch_clear(['A3:J1000'])
     except Exception:
         pass
 except gspread.exceptions.WorksheetNotFound:
@@ -198,7 +198,7 @@ if not tabela_organizada.empty:
         try:
             aba_dia = planilha.worksheet(nome_aba)
             try:
-                aba_dia.batch_clear(['A3:I1000'])
+                aba_dia.batch_clear(['A3:J1000'])
             except Exception:
                 pass
         except gspread.exceptions.WorksheetNotFound:
