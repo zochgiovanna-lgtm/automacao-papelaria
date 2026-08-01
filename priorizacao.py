@@ -37,22 +37,19 @@ for col in colunas_historico:
         tabela_concluidos[col] = ''
 tabela_final_historico = tabela_concluidos[colunas_historico]
 
-# Garantir que a aba Historico_Entregas existe, limpando APENAS os dados da linha 3 para baixo
 try:
     aba_historico = planilha.worksheet('Historico_Entregas')
     try:
         aba_historico.batch_clear(['A3:H1000'])
-    except:
+    except Exception:
         pass
-except:
+except gspread.exceptions.WorksheetNotFound:
     aba_historico = planilha.add_worksheet(title="Historico_Entregas", rows="100", cols="20")
 
-# Envia apenas os valores a partir da linha 3 (preservando totalmente a linha 2)
 dados_historico = tabela_final_historico.values.tolist()
 if dados_historico:
     aba_historico.update('A3', dados_historico)
 
-# AUTOMATIZAÇÃO DA CONTAGEM: Atualiza apenas o texto na célula J1 (preservando totalmente suas cores e mesclagem)
 total_entregues = len(tabela_concluidos)
 texto_contador = f"🎉 Pedidos Entregues: {total_entregues}"
 
@@ -146,19 +143,72 @@ else:
 colunas_finais = ['Data_Pedido', 'Cliente_ID', 'Celular', 'Produto', 'Quantidade', 'Observações', 'Data_Entrega', 'Tempo_Total_Minutos', 'Status_Urgencia']
 tabela_final_sheets = tabela_organizada[colunas_finais] if not tabela_organizada.empty else pd.DataFrame(columns=colunas_finais)
 
-# Garantir que a aba Fila_Prioridade existe, limpando APENAS os dados da linha 3 para baixo
 try:
     aba_destino = planilha.worksheet('Fila_Prioridade')
     try:
         aba_destino.batch_clear(['A3:I1000'])
-    except:
+    except Exception:
         pass
-except:
+except gspread.exceptions.WorksheetNotFound:
     aba_destino = planilha.add_worksheet(title="Fila_Prioridade", rows="100", cols="20")
 
-# Envia apenas os valores a partir da linha 3 (preservando totalmente a linha 2)
 dados_prioridade = tabela_final_sheets.values.tolist()
 if dados_prioridade:
     aba_destino.update('A3', dados_prioridade)
+
+
+# ==========================================
+# PARTE C: DISTRIBUIR PEDIDOS PELAS ABAS DE DIA DA SEMANA
+# ==========================================
+CAPACIDADE_DIARIA_MINUTOS = 480  # 8 horas — ajuste aqui se necessário
+
+NOMES_DIAS = {
+    0: 'SEGUNDA FEIRA',
+    1: 'TERÇA FEIRA',
+    2: 'QUARTA FEIRA',
+    3: 'QUINTA FEIRA',
+    4: 'SEXTA FEIRA',
+    5: 'SÁBADO',
+}
+
+if not tabela_organizada.empty:
+    dia_semana_hoje = pd.Timestamp.today().weekday()
+    inicio = dia_semana_hoje if dia_semana_hoje < 6 else 0
+    ordem_dias = [(inicio + i) % 6 for i in range(6)]
+    nomes_em_ordem = [NOMES_DIAS[d] for d in ordem_dias]
+
+    capacidade_restante = {nome: CAPACIDADE_DIARIA_MINUTOS for nome in nomes_em_ordem}
+    pedidos_por_dia = {nome: [] for nome in nomes_em_ordem}
+
+    for _, linha in tabela_organizada.iterrows():
+        tempo = linha['Tempo_Total_Minutos']
+        dia_escolhido = next(
+            (nome for nome in nomes_em_ordem if capacidade_restante[nome] >= tempo),
+            None
+        )
+        if dia_escolhido is None:
+            dia_escolhido = max(capacidade_restante, key=capacidade_restante.get)
+
+        capacidade_restante[dia_escolhido] -= tempo
+        pedidos_por_dia[dia_escolhido].append(linha)
+
+    for nome_aba in nomes_em_ordem:
+        try:
+            aba_dia = planilha.worksheet(nome_aba)
+            try:
+                aba_dia.batch_clear(['A3:I1000'])
+            except Exception:
+                pass
+        except gspread.exceptions.WorksheetNotFound:
+            aba_dia = planilha.add_worksheet(title=nome_aba, rows="100", cols="20")
+
+        linhas_do_dia = pedidos_por_dia[nome_aba]
+        if linhas_do_dia:
+            tabela_dia = pd.DataFrame(linhas_do_dia)[colunas_finais]
+            aba_dia.update('A3', tabela_dia.values.tolist())
+
+    print("Distribuição por dia da semana concluída!")
+else:
+    print("Nenhum pedido pendente para distribuir pelos dias da semana.")
 
 print("Processamento concluído com sucesso!")
