@@ -39,24 +39,49 @@ tabela_final_historico = tabela_concluidos[colunas_historico]
 
 try:
     aba_historico = planilha.worksheet('Historico_Entregas')
-    try:
-        aba_historico.batch_clear(['A3:I1000'])
-    except Exception:
-        pass
 except gspread.exceptions.WorksheetNotFound:
-    aba_historico = planilha.add_worksheet(title="Historico_Entregas", rows="100", cols="20")
+    aba_historico = planilha.add_worksheet(title="Historico_Entregas", rows="200", cols="20")
+
+# Conta quantas linhas já existem no histórico (a partir da linha 3), para não
+# sobrescrever o que já foi registrado em execuções anteriores.
+valores_historico_atual = aba_historico.get_all_values()
+linhas_ja_existentes = max(0, len(valores_historico_atual) - 2)  # desconta linhas 1 e 2 (cabeçalho)
 
 dados_historico = tabela_final_historico.values.tolist()
 if dados_historico:
-    aba_historico.update('A3', dados_historico)
+    # append_rows adiciona ao final, sem apagar os pedidos já registrados antes.
+    aba_historico.append_rows(dados_historico, value_input_option='USER_ENTERED')
 
-total_entregues = len(tabela_concluidos)
+total_entregues = linhas_ja_existentes + len(dados_historico)
 texto_contador = f"🎉 Pedidos Entregues: {total_entregues}"
 
 try:
     aba_historico.update('J1', [[texto_contador]])
 except Exception as e:
     print(f"Erro ao atualizar contador: {e}")
+
+
+# ==========================================
+# PARTE A.1: REMOVER PEDIDOS CONCLUÍDOS DA PÁGINA1
+# ==========================================
+# Só chega até aqui depois que o Historico_Entregas já foi atualizado acima,
+# então mesmo que essa etapa falhe, os dados dos pedidos concluídos já
+# estão salvos em Historico_Entregas.
+colunas_pagina1 = ['Data_Pedido', 'Cliente_ID', 'Celular', 'Produto', 'Quantidade', 'Observações', 'Data_Entrega', 'Concluido', 'Pago']
+for col in colunas_pagina1:
+    if col not in tabela_pendentes.columns:
+        tabela_pendentes[col] = ''
+
+tabela_pagina1_restante = tabela_pendentes[colunas_pagina1]
+
+try:
+    aba_origem.batch_clear(['A3:I1000'])
+    dados_pagina1_restante = tabela_pagina1_restante.values.tolist()
+    if dados_pagina1_restante:
+        aba_origem.update('A3', dados_pagina1_restante)
+    print(f"Página1 atualizada: {len(dados_pagina1_restante)} pedido(s) pendente(s) mantido(s).")
+except Exception as e:
+    print(f"Erro ao limpar pedidos concluídos da Página1: {e}")
 
 
 # ==========================================
