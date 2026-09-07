@@ -124,7 +124,9 @@ regras_tempos = {
     'FOTO POLAROID DE GELADEIRA':       {'fixo': 0, 'unitario': 5},
     'ESTAMPA DTF':                      {'fixo': 0, 'unitario': 10},
     'ADESIVO DE VINIL':                 {'fixo': 0, 'unitario': 5},
-    'BLOQUINHO COLOR PLUS':             {'fixo': 0, 'unitario': 30}
+    'BLOQUINHO COLOR PLUS':             {'fixo': 0, 'unitario': 30},
+    'MARCA PAGINA':                     {'fixo': 0, 'unitario': 10},
+    'BALÃO':                            {'fixo': 0,  'unitario': 130}
 }
 
 if not tabela_pendentes.empty:
