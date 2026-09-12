@@ -55,10 +55,44 @@ if dados_historico:
 total_entregues = linhas_ja_existentes + len(dados_historico)
 texto_contador = f"🎉 Pedidos Entregues: {total_entregues}"
 
+# ------------------------------------------
+# Total já vendido (soma da coluna Valor de todos os pedidos concluídos,
+# incluindo os já registrados em execuções anteriores + os novos de agora)
+# ------------------------------------------
+def parse_valor(v):
+    """Converte texto de valor (ex: 'R$ 25,90', '1.234,56', '25.90') em float."""
+    s = str(v).strip().replace('R$', '').replace(' ', '')
+    if not s:
+        return 0.0
+    if ',' in s and '.' in s:
+        s = s.replace('.', '').replace(',', '.')
+    else:
+        s = s.replace(',', '.')
+    try:
+        return float(s)
+    except ValueError:
+        return 0.0
+
+indice_coluna_valor = colunas_historico.index('Valor')  # posição da coluna Valor no histórico
+
+valor_ja_existente = sum(
+    parse_valor(linha[indice_coluna_valor])
+    for linha in valores_historico_atual[2:]  # pula as linhas 1 e 2 (cabeçalho)
+    if len(linha) > indice_coluna_valor
+)
+valor_novo = tabela_concluidos['Valor'].apply(parse_valor).sum() if 'Valor' in tabela_concluidos.columns else 0.0
+
+total_valor_vendido = valor_ja_existente + valor_novo
+texto_valor_total = f"💰 Total já vendido: R$ {total_valor_vendido:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+
+# Como J1 e J2 estão mescladas num único bloco (J1:L2), as duas informações
+# precisam ir na mesma célula, separadas por quebra de linha.
+texto_quadro = f"{texto_contador}\n{texto_valor_total}"
+
 try:
-    aba_historico.update('J1', [[texto_contador]])
+    aba_historico.update('J1', [[texto_quadro]], value_input_option='USER_ENTERED')
 except Exception as e:
-    print(f"Erro ao atualizar contador: {e}")
+    print(f"Erro ao atualizar quadro de resumo (contador + total vendido): {e}")
 
 
 # ==========================================
