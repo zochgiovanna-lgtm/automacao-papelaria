@@ -15,7 +15,7 @@ dados = aba_origem.get_all_records(head=2)
 tabela_pedidos = pd.DataFrame(dados)
 
 # 3. GARANTIA DE COLUNAS EXISTENTES
-colunas_necessarias = ['Data_Pedido', 'Celular', 'Concluido', 'Observações', 'Quantidade', 'Pago']
+colunas_necessarias = ['Data_Pedido', 'Celular', 'Concluido', 'Observações', 'Quantidade', 'Pago', 'Valor']
 for col in colunas_necessarias:
     if col not in tabela_pedidos.columns:
         tabela_pedidos[col] = ''
@@ -31,7 +31,7 @@ tabela_pendentes = tabela_pedidos[~condicao_concluido].copy()
 # ==========================================
 # PARTE A: ATUALIZAR ABA HISTÓRICO DE ENTREGAS
 # ==========================================
-colunas_historico = ['Data_Pedido', 'Cliente_ID', 'Celular', 'Produto', 'Quantidade', 'Observações', 'Data_Entrega', 'Concluido', 'Pago']
+colunas_historico = ['Data_Pedido', 'Cliente_ID', 'Celular', 'Produto', 'Quantidade', 'Observações', 'Data_Entrega', 'Concluido', 'Pago', 'Valor']
 for col in colunas_historico:
     if col not in tabela_concluidos.columns:
         tabela_concluidos[col] = ''
@@ -67,7 +67,7 @@ except Exception as e:
 # Só chega até aqui depois que o Historico_Entregas já foi atualizado acima,
 # então mesmo que essa etapa falhe, os dados dos pedidos concluídos já
 # estão salvos em Historico_Entregas.
-colunas_pagina1 = ['Data_Pedido', 'Cliente_ID', 'Celular', 'Produto', 'Quantidade', 'Observações', 'Data_Entrega', 'Concluido', 'Pago']
+colunas_pagina1 = ['Data_Pedido', 'Cliente_ID', 'Celular', 'Produto', 'Quantidade', 'Observações', 'Data_Entrega', 'Concluido', 'Pago', 'Valor']
 for col in colunas_pagina1:
     if col not in tabela_pendentes.columns:
         tabela_pendentes[col] = ''
@@ -75,7 +75,7 @@ for col in colunas_pagina1:
 tabela_pagina1_restante = tabela_pendentes[colunas_pagina1]
 
 try:
-    aba_origem.batch_clear(['A3:I1000'])
+    aba_origem.batch_clear(['A3:J1000'])
     dados_pagina1_restante = tabela_pagina1_restante.values.tolist()
     if dados_pagina1_restante:
         aba_origem.update('A3', dados_pagina1_restante)
@@ -125,8 +125,14 @@ regras_tempos = {
     'ESTAMPA DTF':                      {'fixo': 0, 'unitario': 10},
     'ADESIVO DE VINIL':                 {'fixo': 0, 'unitario': 5},
     'BLOQUINHO COLOR PLUS':             {'fixo': 0, 'unitario': 30},
-    'MARCA PAGINA':                     {'fixo': 0, 'unitario': 10},
-    'BALÃO':                            {'fixo': 0,  'unitario': 130}
+    'CADERNO A5':                       {'fixo': 0,  'unitario': 90},   # 🔶 ESTIMATIVA — validar com a cliente
+    'CADERNO A4':                       {'fixo': 0,  'unitario': 120},  # 🔶 ESTIMATIVA — validar com a cliente
+    'CALENDARIO GELADEIRA MINI':        {'fixo': 0,  'unitario': 20},   # 🔶 ESTIMATIVA — validar com a cliente
+    'CALENDARIO GELADEIRA MEDIO':       {'fixo': 0,  'unitario': 30},   # 🔶 ESTIMATIVA — validar com a cliente
+    'CALENDARIO DE GELADEIRA A4':       {'fixo': 0,  'unitario': 45},   # 🔶 ESTIMATIVA — validar com a cliente
+    'QUADRO MDF A4':                    {'fixo': 0,  'unitario': 40},   # 🔶 ESTIMATIVA — validar com a cliente
+    'TOPO DE BOLO CENARIO':             {'fixo': 60, 'unitario': 20},   # 🔶 ESTIMATIVA — validar com a cliente
+    'MARCA PAGINA MAGNETICO':           {'fixo': 0,  'unitario': 10}    # 🔶 ESTIMATIVA — validar com a cliente
 }
 
 if not tabela_pendentes.empty:
@@ -167,15 +173,15 @@ if not tabela_pendentes.empty:
     tabela_pendentes['_nota_oculta'] = nota_interna
     tabela_organizada = tabela_pendentes.sort_values(by='_nota_oculta', ascending=False)
 else:
-    tabela_organizada = pd.DataFrame(columns=['Data_Pedido', 'Cliente_ID', 'Celular', 'Produto', 'Quantidade', 'Observações', 'Data_Entrega', 'Tempo_Total_Minutos', 'Status_Urgencia', 'Pago'])
+    tabela_organizada = pd.DataFrame(columns=['Data_Pedido', 'Cliente_ID', 'Celular', 'Produto', 'Quantidade', 'Observações', 'Data_Entrega', 'Tempo_Total_Minutos', 'Status_Urgencia', 'Pago', 'Valor'])
 
-colunas_finais = ['Data_Pedido', 'Cliente_ID', 'Celular', 'Produto', 'Quantidade', 'Observações', 'Data_Entrega', 'Tempo_Total_Minutos', 'Status_Urgencia', 'Pago']
+colunas_finais = ['Data_Pedido', 'Cliente_ID', 'Celular', 'Produto', 'Quantidade', 'Observações', 'Data_Entrega', 'Tempo_Total_Minutos', 'Status_Urgencia', 'Pago', 'Valor']
 tabela_final_sheets = tabela_organizada[colunas_finais] if not tabela_organizada.empty else pd.DataFrame(columns=colunas_finais)
 
 try:
     aba_destino = planilha.worksheet('Fila_Prioridade')
     try:
-        aba_destino.batch_clear(['A3:J1000'])
+        aba_destino.batch_clear(['A3:K1000'])
     except Exception:
         pass
 except gspread.exceptions.WorksheetNotFound:
@@ -225,7 +231,7 @@ if not tabela_organizada.empty:
         try:
             aba_dia = planilha.worksheet(nome_aba)
             try:
-                aba_dia.batch_clear(['A3:J1000'])
+                aba_dia.batch_clear(['A3:K1000'])
             except Exception:
                 pass
         except gspread.exceptions.WorksheetNotFound:
