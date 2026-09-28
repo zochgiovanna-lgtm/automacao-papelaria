@@ -166,7 +166,8 @@ regras_tempos = {
     'CALENDARIO DE GELADEIRA A4':       {'fixo': 0,  'unitario': 45},   # 🔶 ESTIMATIVA — validar com a cliente
     'QUADRO MDF A4':                    {'fixo': 0,  'unitario': 40},   # 🔶 ESTIMATIVA — validar com a cliente
     'TOPO DE BOLO CENARIO':             {'fixo': 60, 'unitario': 20},   # 🔶 ESTIMATIVA — validar com a cliente
-    'MARCA PAGINA MAGNETICO':           {'fixo': 0,  'unitario': 10}    # 🔶 ESTIMATIVA — validar com a cliente
+    'MARCA PAGINA MAGNETICO':           {'fixo': 0,  'unitario': 10},  # 🔶 ESTIMATIVA — validar com a cliente
+    'CAIXA C/ CANECA':                  {'fixo': 0,  'unitario': 60}
 }
 
 if not tabela_pendentes.empty:
