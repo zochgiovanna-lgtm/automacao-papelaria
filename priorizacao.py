@@ -110,12 +110,12 @@ valor_novo = tabela_concluidos['Valor'].apply(parse_valor).sum() if 'Valor' in t
 total_valor_vendido = valor_ja_existente + valor_novo
 texto_valor_total = f"💰 Total já vendido: R$ {total_valor_vendido:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
 
-# Como J1 e J2 estão mescladas num único bloco (J1:L2), as duas informações
-# precisam ir na mesma célula, separadas por quebra de linha.
+# O quadro de resumo está mesclado em K1:M2 (não mais J1:L2), então a
+# atualização precisa mirar em K1, que é a célula-âncora do bloco mesclado.
 texto_quadro = f"{texto_contador}\n{texto_valor_total}"
 
 try:
-    aba_historico.update('J1', [[texto_quadro]], value_input_option='USER_ENTERED')
+    aba_historico.update('K1', [[texto_quadro]], value_input_option='USER_ENTERED')
 except Exception as e:
     print(f"Erro ao atualizar quadro de resumo (contador + total vendido): {e}")
 
