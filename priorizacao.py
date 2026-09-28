@@ -126,7 +126,7 @@ except Exception as e:
 # Só chega até aqui depois que o Historico_Entregas já foi atualizado acima,
 # então mesmo que essa etapa falhe, os dados dos pedidos concluídos já
 # estão salvos em Historico_Entregas.
-colunas_pagina1 = ['Data_Pedido', 'Cliente_ID', 'Celular', 'Produto', 'Quantidade', 'Observações', 'Data_Entrega', 'Concluido', 'Pago', 'Valor']
+colunas_pagina1 = ['Data_Pedido', 'Celular', 'Cliente_ID', 'Produto', 'Quantidade', 'Observações', 'Data_Entrega', 'Concluido', 'Pago', 'Valor']
 for col in colunas_pagina1:
     if col not in tabela_pendentes.columns:
         tabela_pendentes[col] = ''
