@@ -73,13 +73,38 @@ def parse_valor(v):
     except ValueError:
         return 0.0
 
-indice_coluna_valor = colunas_historico.index('Valor')  # posição da coluna Valor no histórico
+indice_coluna_valor = colunas_historico.index('Valor')  # posição padrão (fallback)
+
+# Em vez de confiar cegamente na posição fixa, procura o cabeçalho "Valor" de
+# verdade na linha 2 da planilha — assim, mesmo que uma coluna tenha sido
+# inserida/movida manualmente, a soma continua batendo com a coluna certa.
+if len(valores_historico_atual) >= 2:
+    linha_cabecalho = valores_historico_atual[1]  # linha 2 (índice 1)
+    for i, titulo in enumerate(linha_cabecalho):
+        if titulo.strip().lower() == 'valor':
+            indice_coluna_valor = i
+            break
+
+linhas_com_valor_existente = [
+    (i + 3, linha[indice_coluna_valor])  # +3 porque a planilha começa a contar na linha 3
+    for i, linha in enumerate(valores_historico_atual[2:])
+    if len(linha) > indice_coluna_valor and linha[indice_coluna_valor].strip() != ''
+]
+
+print(f"[DIAGNÓSTICO] índice da coluna Valor usado: {indice_coluna_valor}")
+print(f"[DIAGNÓSTICO] total de linhas já existentes no histórico: {len(valores_historico_atual[2:])}")
+print(f"[DIAGNÓSTICO] linhas com Valor preenchido encontradas: {len(linhas_com_valor_existente)}")
+for numero_linha, valor_bruto in linhas_com_valor_existente[:20]:
+    print(f"[DIAGNÓSTICO]   linha {numero_linha}: '{valor_bruto}' -> {parse_valor(valor_bruto)}")
 
 valor_ja_existente = sum(
     parse_valor(linha[indice_coluna_valor])
     for linha in valores_historico_atual[2:]  # pula as linhas 1 e 2 (cabeçalho)
     if len(linha) > indice_coluna_valor
 )
+
+print(f"[DIAGNÓSTICO] valor_ja_existente somado: {valor_ja_existente}")
+print(f"[DIAGNÓSTICO] valor_novo (deste lote): {tabela_concluidos['Valor'].apply(parse_valor).sum() if 'Valor' in tabela_concluidos.columns else 0.0}")
 valor_novo = tabela_concluidos['Valor'].apply(parse_valor).sum() if 'Valor' in tabela_concluidos.columns else 0.0
 
 total_valor_vendido = valor_ja_existente + valor_novo
