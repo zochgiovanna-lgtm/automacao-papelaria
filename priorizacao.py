@@ -56,7 +56,7 @@ print(f"[DIAGNÓSTICO] Colunas lidas da Página1: {list(tabela_pedidos.columns)}
 print(f"[DIAGNÓSTICO] Total de linhas lidas (após limpeza de fantasmas): {len(tabela_pedidos)}")
 print(f"[DIAGNÓSTICO] Valores únicos encontrados na coluna 'Concluido': {tabela_pedidos['Concluido'].astype(str).unique().tolist()}")
 
-condicao_concluido = tabela_pedidos['Concluido'].astype(str).str.upper().isin(['TRUE', 'SIM', 'VERDADEIRO', 'PRONTO'])
+condicao_concluido = tabela_pedidos['Concluido'].astype(str).str.strip().str.upper().isin(['TRUE', 'SIM', 'VERDADEIRO', 'PRONTO'])
 tabela_concluidos = tabela_pedidos[condicao_concluido].copy()
 tabela_pendentes = tabela_pedidos[~condicao_concluido].copy()
 
