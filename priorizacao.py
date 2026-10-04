@@ -11,7 +11,35 @@ gc = gspread.service_account_from_dict(credenciais_json)
 # 2. Abrir a planilha (Lendo a linha 2 como cabeçalho)
 planilha = gc.open('Pedidos_Papelaria')
 aba_origem = planilha.worksheet('Página1')
-dados = aba_origem.get_all_records(head=2)
+
+try:
+    dados = aba_origem.get_all_records(head=2)
+except gspread.exceptions.GSpreadException:
+    # Normalmente acontece quando existem colunas sem cabeçalho (título em
+    # branco) ou cabeçalhos repetidos na linha 2 da Página1. Em vez de supor
+    # uma ordem fixa de colunas, lemos o cabeçalho real da planilha (seja
+    # qual for a ordem que ela estiver) e só corrigimos o que está vazio ou
+    # duplicado — preservando a leitura correta de todas as colunas normais,
+    # como "Concluido", no lugar certo.
+    cabecalho_bruto = aba_origem.row_values(2)
+    cabecalho_corrigido = []
+    contador_vazios = 0
+    vistos = {}
+    for titulo in cabecalho_bruto:
+        titulo_limpo = titulo.strip()
+        if titulo_limpo == '':
+            contador_vazios += 1
+            titulo_limpo = f'_coluna_vazia_{contador_vazios}'
+        if titulo_limpo in vistos:
+            vistos[titulo_limpo] += 1
+            titulo_limpo = f'{titulo_limpo}_{vistos[titulo_limpo]}'
+        else:
+            vistos[titulo_limpo] = 0
+        cabecalho_corrigido.append(titulo_limpo)
+
+    print(f"[DIAGNÓSTICO] Cabeçalho da Página1 tinha célula(s) vazia/duplicada. Corrigido para: {cabecalho_corrigido}")
+    dados = aba_origem.get_all_records(head=2, expected_headers=cabecalho_corrigido)
+
 tabela_pedidos = pd.DataFrame(dados)
 
 # 3. GARANTIA DE COLUNAS EXISTENTES
