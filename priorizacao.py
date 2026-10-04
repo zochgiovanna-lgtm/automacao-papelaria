@@ -52,9 +52,17 @@ for col in colunas_necessarias:
 tabela_pedidos = tabela_pedidos[tabela_pedidos['Cliente_ID'].astype(str).str.strip() != '']
 
 # Separar Concluídos de Pendentes
+print(f"[DIAGNÓSTICO] Colunas lidas da Página1: {list(tabela_pedidos.columns)}")
+print(f"[DIAGNÓSTICO] Total de linhas lidas (após limpeza de fantasmas): {len(tabela_pedidos)}")
+print(f"[DIAGNÓSTICO] Valores únicos encontrados na coluna 'Concluido': {tabela_pedidos['Concluido'].astype(str).unique().tolist()}")
+
 condicao_concluido = tabela_pedidos['Concluido'].astype(str).str.upper().isin(['TRUE', 'SIM', 'VERDADEIRO', 'PRONTO'])
 tabela_concluidos = tabela_pedidos[condicao_concluido].copy()
 tabela_pendentes = tabela_pedidos[~condicao_concluido].copy()
+
+print(f"[DIAGNÓSTICO] Pedidos identificados como CONCLUÍDOS nesta execução: {len(tabela_concluidos)}")
+if len(tabela_concluidos) > 0:
+    print(f"[DIAGNÓSTICO] Clientes dos concluídos: {tabela_concluidos['Cliente_ID'].tolist()}")
 
 # ==========================================
 # PARTE A: ATUALIZAR ABA HISTÓRICO DE ENTREGAS
