@@ -170,9 +170,12 @@ try:
             return None
         for formato in ('%d/%m/%Y', '%d/%m/%y'):
             try:
-                return datetime.strptime(s, formato)
+                data_lida = datetime.strptime(s, formato)
             except ValueError:
-                pass
+                continue
+            # Datas muito antigas (ex.: 01/01/1900) vêm de números soltos que o
+            # Sheets converteu em data. Não são entregas reais.
+            return data_lida if data_lida.year >= 2020 else None
         partes = s.replace('-', '/').split('/')
         if len(partes) == 2:
             try:
