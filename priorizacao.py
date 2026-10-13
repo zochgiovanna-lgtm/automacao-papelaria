@@ -215,29 +215,95 @@ try:
             por_mes[chave][0] += 1
             por_mes[chave][1] += valor_linha
 
-    linhas_resumo = [['Mês de entrega', 'Pedidos entregues', 'Total vendido (R$)']]
-    for (ano, mes) in sorted(por_mes):
-        qtd, valor_mes = por_mes[(ano, mes)]
-        linhas_resumo.append([f"{mes:02d}/{ano}", qtd, round(valor_mes, 2)])
-    if sem_data[0] > 0:
-        linhas_resumo.append(['Sem data de entrega válida', sem_data[0], round(sem_data[1], 2)])
+    # ---- SAÍDAS (gastos): aba "Saidas", preenchida manualmente pela cliente ----
+    # Colunas: A=Data, B=Descrição, C=Categoria, D=Valor (cabeçalho na linha 2).
+    try:
+        aba_saidas = planilha.worksheet('Saidas')
+    except gspread.exceptions.WorksheetNotFound:
+        aba_saidas = planilha.add_worksheet(title='Saidas', rows="500", cols="6")
+        aba_saidas.update(values=[['SAÍDAS (GASTOS)'], ['Data', 'Descrição', 'Categoria', 'Valor']],
+                          range_name='A1', value_input_option='RAW')
+        try:
+            aba_saidas.format('A1:D2', {'textFormat': {'bold': True}})
+        except Exception:
+            pass
+
+    gastos_mes = {}        # (ano, mes) -> total
+    gastos_cat = {}        # categoria -> {(ano, mes) ou None: total}
+    gasto_sem_data = 0.0
+    for linha_s in aba_saidas.get_all_values()[2:]:
+        linha_s = linha_s + [''] * (4 - len(linha_s))
+        if not any(c.strip() for c in linha_s[:4]):
+            continue
+        valor_gasto = parse_valor(linha_s[3])
+        categoria = linha_s[2].strip().upper() or 'SEM CATEGORIA'
+        data_gasto = parse_data_entrega(linha_s[0], agora)
+        chave_g = (data_gasto.year, data_gasto.month) if data_gasto else None
+        if chave_g:
+            gastos_mes[chave_g] = gastos_mes.get(chave_g, 0.0) + valor_gasto
+        else:
+            gasto_sem_data += valor_gasto
+        gastos_cat.setdefault(categoria, {})
+        gastos_cat[categoria][chave_g] = gastos_cat[categoria].get(chave_g, 0.0) + valor_gasto
+
+    # ---- Resumo_Mensal: vendas x gastos x sobra ----
+    linhas_resumo = [['Mês', 'Pedidos entregues', 'Total vendido (R$)', 'Gastos (R$)', 'Sobra (R$)']]
+    for chave in sorted(set(por_mes) | set(gastos_mes)):
+        qtd, vendido = por_mes.get(chave, [0, 0.0])
+        gasto = gastos_mes.get(chave, 0.0)
+        linhas_resumo.append([f"{chave[1]:02d}/{chave[0]}", qtd, round(vendido, 2),
+                              round(gasto, 2), round(vendido - gasto, 2)])
+    if sem_data[0] > 0 or gasto_sem_data > 0:
+        linhas_resumo.append(['Sem data válida', sem_data[0], round(sem_data[1], 2),
+                              round(gasto_sem_data, 2), round(sem_data[1] - gasto_sem_data, 2)])
     total_qtd = sum(v[0] for v in por_mes.values()) + sem_data[0]
     total_val = sum(v[1] for v in por_mes.values()) + sem_data[1]
-    linhas_resumo.append(['TOTAL', total_qtd, round(total_val, 2)])
+    total_gasto = sum(gastos_mes.values()) + gasto_sem_data
+    linhas_resumo.append(['TOTAL', total_qtd, round(total_val, 2), round(total_gasto, 2),
+                          round(total_val - total_gasto, 2)])
 
     try:
         aba_resumo = planilha.worksheet('Resumo_Mensal')
     except gspread.exceptions.WorksheetNotFound:
         aba_resumo = planilha.add_worksheet(title='Resumo_Mensal', rows="100", cols="10")
 
-    aba_resumo.batch_clear(['A1:C100'])
+    aba_resumo.batch_clear(['A1:E100'])
     aba_resumo.update(values=linhas_resumo, range_name='A1', value_input_option='RAW')
     try:
-        aba_resumo.format('C2:C100', {'numberFormat': {'type': 'CURRENCY', 'pattern': '"R$" #,##0.00'}})
-        aba_resumo.format('A1:C1', {'textFormat': {'bold': True}})
+        aba_resumo.format('C2:E100', {'numberFormat': {'type': 'CURRENCY', 'pattern': '"R$" #,##0.00'}})
+        aba_resumo.format('A1:E1', {'textFormat': {'bold': True}})
     except Exception as e_fmt:
         print(f"Aviso: não foi possível formatar a aba Resumo_Mensal: {e_fmt}")
-    print(f"Resumo_Mensal atualizado: {len(por_mes)} mês(es), {sem_data[0]} pedido(s) sem data válida.")
+
+    # ---- Gastos_por_Categoria: categorias nas linhas, meses nas colunas ----
+    meses_g = sorted({k for d in gastos_cat.values() for k in d if k is not None})
+    tem_sem_data = any(None in d for d in gastos_cat.values())
+    cabecalho_cat = ['Categoria'] + [f"{m:02d}/{a}" for (a, m) in meses_g]
+    if tem_sem_data:
+        cabecalho_cat.append('Sem data')
+    cabecalho_cat.append('Total')
+    linhas_cat = [cabecalho_cat]
+    for categoria, d in sorted(gastos_cat.items(), key=lambda x: -sum(x[1].values())):
+        linha_c = [categoria] + [round(d.get(k, 0.0), 2) for k in meses_g]
+        if tem_sem_data:
+            linha_c.append(round(d.get(None, 0.0), 2))
+        linha_c.append(round(sum(d.values()), 2))
+        linhas_cat.append(linha_c)
+
+    try:
+        aba_cat = planilha.worksheet('Gastos_por_Categoria')
+    except gspread.exceptions.WorksheetNotFound:
+        aba_cat = planilha.add_worksheet(title='Gastos_por_Categoria', rows="200", cols="30")
+    aba_cat.batch_clear(['A1:Z200'])
+    aba_cat.update(values=linhas_cat, range_name='A1', value_input_option='RAW')
+    try:
+        aba_cat.format('B2:Z200', {'numberFormat': {'type': 'CURRENCY', 'pattern': '"R$" #,##0.00'}})
+        aba_cat.format('A1:Z1', {'textFormat': {'bold': True}})
+    except Exception as e_fmt:
+        print(f"Aviso: não foi possível formatar a aba Gastos_por_Categoria: {e_fmt}")
+
+    print(f"Resumo_Mensal atualizado: {len(set(por_mes) | set(gastos_mes))} mês(es), {sem_data[0]} pedido(s) sem data válida.")
+    print(f"Gastos_por_Categoria atualizado: {len(gastos_cat)} categoria(s).")
 except Exception as e:
     print(f"Erro ao atualizar Resumo_Mensal: {e}")
 
