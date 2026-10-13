@@ -228,7 +228,13 @@ regras_tempos = {
     'QUADRO MDF A4':                    {'fixo': 0,  'unitario': 40},   # 🔶 ESTIMATIVA — validar com a cliente
     'TOPO DE BOLO CENARIO':             {'fixo': 60, 'unitario': 20},   # 🔶 ESTIMATIVA — validar com a cliente
     'MARCA PAGINA MAGNETICO':           {'fixo': 0,  'unitario': 10},  # 🔶 ESTIMATIVA — validar com a cliente
-    'CAIXA C/ CANECA':                  {'fixo': 0,  'unitario': 60}
+    'CAIXA C/ CANECA':                  {'fixo': 0,  'unitario': 60},
+    'CORTE LETRA':                      {'fixo': 0,  'unitario': 20},   # 🔶 ESTIMATIVA — validar com a cliente
+    'APENAS CORTE':                     {'fixo': 0,  'unitario': 20},   # 🔶 ESTIMATIVA — validar com a cliente
+    'APENAS MONTAGEM':                  {'fixo': 0,  'unitario': 20},   # 🔶 ESTIMATIVA — validar com a cliente
+    'ITEM DA LOJA':                     {'fixo': 0,  'unitario': 20},   # 🔶 ESTIMATIVA — validar com a cliente
+    'APENAS ARTE':                      {'fixo': 0,  'unitario': 20},   # 🔶 ESTIMATIVA — validar com a cliente
+    'BRINDES':                          {'fixo': 0,  'unitario': 20}    # 🔶 ESTIMATIVA — validar com a cliente
 }
 
 if not tabela_pendentes.empty:
