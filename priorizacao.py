@@ -155,6 +155,89 @@ try:
 except Exception as e:
     print(f"Erro ao atualizar quadro de resumo (contador + total vendido): {e}")
 
+# ------------------------------------------
+# RESUMO MENSAL: pedidos entregues e total vendido por mês de entrega.
+# Recalculado do zero a cada execução, lendo todo o Historico_Entregas.
+# ------------------------------------------
+try:
+    from datetime import datetime
+
+    def parse_data_entrega(texto, hoje_dt):
+        """Aceita '28/07/2026'. Se vier sem ano ('15/09'), assume o ano atual
+        (ou o anterior, se a data ficaria mais de 6 meses no futuro)."""
+        s = str(texto).strip()
+        if not s:
+            return None
+        for formato in ('%d/%m/%Y', '%d/%m/%y'):
+            try:
+                return datetime.strptime(s, formato)
+            except ValueError:
+                pass
+        partes = s.replace('-', '/').split('/')
+        if len(partes) == 2:
+            try:
+                dia, mes = int(partes[0]), int(partes[1])
+                data = datetime(hoje_dt.year, mes, dia)
+                if (data - hoje_dt).days > 180:
+                    data = datetime(hoje_dt.year - 1, mes, dia)
+                return data
+            except ValueError:
+                return None
+        return None
+
+    valores_finais = aba_historico.get_all_values()
+    cabecalho_hist = valores_finais[1] if len(valores_finais) >= 2 else []
+    idx_data_entrega = colunas_historico.index('Data_Entrega')
+    for i, titulo in enumerate(cabecalho_hist):
+        if titulo.strip().lower() == 'data_entrega':
+            idx_data_entrega = i
+            break
+
+    agora = datetime.now()
+    por_mes = {}   # (ano, mes) -> [quantidade, valor]
+    sem_data = [0, 0.0]
+
+    for linha in valores_finais[2:]:
+        if not any(celula.strip() for celula in linha[:len(colunas_historico)]):
+            continue  # linha vazia
+        texto_data = linha[idx_data_entrega] if len(linha) > idx_data_entrega else ''
+        valor_linha = parse_valor(linha[indice_coluna_valor]) if len(linha) > indice_coluna_valor else 0.0
+        data = parse_data_entrega(texto_data, agora)
+        if data is None:
+            sem_data[0] += 1
+            sem_data[1] += valor_linha
+        else:
+            chave = (data.year, data.month)
+            por_mes.setdefault(chave, [0, 0.0])
+            por_mes[chave][0] += 1
+            por_mes[chave][1] += valor_linha
+
+    linhas_resumo = [['Mês de entrega', 'Pedidos entregues', 'Total vendido (R$)']]
+    for (ano, mes) in sorted(por_mes):
+        qtd, valor_mes = por_mes[(ano, mes)]
+        linhas_resumo.append([f"{mes:02d}/{ano}", qtd, round(valor_mes, 2)])
+    if sem_data[0] > 0:
+        linhas_resumo.append(['Sem data de entrega válida', sem_data[0], round(sem_data[1], 2)])
+    total_qtd = sum(v[0] for v in por_mes.values()) + sem_data[0]
+    total_val = sum(v[1] for v in por_mes.values()) + sem_data[1]
+    linhas_resumo.append(['TOTAL', total_qtd, round(total_val, 2)])
+
+    try:
+        aba_resumo = planilha.worksheet('Resumo_Mensal')
+    except gspread.exceptions.WorksheetNotFound:
+        aba_resumo = planilha.add_worksheet(title='Resumo_Mensal', rows="100", cols="10")
+
+    aba_resumo.batch_clear(['A1:C100'])
+    aba_resumo.update(values=linhas_resumo, range_name='A1', value_input_option='RAW')
+    try:
+        aba_resumo.format('C2:C100', {'numberFormat': {'type': 'CURRENCY', 'pattern': '"R$" #,##0.00'}})
+        aba_resumo.format('A1:C1', {'textFormat': {'bold': True}})
+    except Exception as e_fmt:
+        print(f"Aviso: não foi possível formatar a aba Resumo_Mensal: {e_fmt}")
+    print(f"Resumo_Mensal atualizado: {len(por_mes)} mês(es), {sem_data[0]} pedido(s) sem data válida.")
+except Exception as e:
+    print(f"Erro ao atualizar Resumo_Mensal: {e}")
+
 
 # ==========================================
 # PARTE A.1: REMOVER PEDIDOS CONCLUÍDOS DA PÁGINA1
