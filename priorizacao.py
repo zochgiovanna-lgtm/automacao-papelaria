@@ -386,7 +386,11 @@ regras_tempos = {
     'APENAS MONTAGEM':                  {'fixo': 0,  'unitario': 20},   # 🔶 ESTIMATIVA — validar com a cliente
     'ITEM DA LOJA':                     {'fixo': 0,  'unitario': 20},   # 🔶 ESTIMATIVA — validar com a cliente
     'APENAS ARTE':                      {'fixo': 0,  'unitario': 20},   # 🔶 ESTIMATIVA — validar com a cliente
-    'BRINDES':                          {'fixo': 0,  'unitario': 20}    # 🔶 ESTIMATIVA — validar com a cliente
+    'BRINDES':                          {'fixo': 0,  'unitario': 20},   # 🔶 ESTIMATIVA — validar com a cliente
+    'TAG COM CORTE':                    {'fixo': 0,  'unitario': 10},   # 🔶 ESTIMATIVA — validar com a cliente
+    'ARTE':                             {'fixo': 0,  'unitario': 20},   # 🔶 ESTIMATIVA — validar com a cliente
+    'ARTE + IMPRESSÃO':                 {'fixo': 0,  'unitario': 30},   # 🔶 ESTIMATIVA — validar com a cliente
+    'EMBALAGEM PARA PRESENTE':          {'fixo': 0,  'unitario': 15}    # 🔶 ESTIMATIVA — validar com a cliente
 }
 
 if not tabela_pendentes.empty:
