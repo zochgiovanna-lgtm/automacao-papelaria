@@ -177,6 +177,13 @@ try:
             # Sheets converteu em data. Não são entregas reais.
             return data_lida if data_lida.year >= 2020 else None
         partes = s.replace('-', '/').split('/')
+        if len(partes) == 2 and len(partes[1].strip()) == 4:
+            # Formato mês/ano (ex.: '10/2026'): considera o dia 1 desse mês.
+            try:
+                data_ma = datetime(int(partes[1]), int(partes[0]), 1)
+                return data_ma if data_ma.year >= 2020 else None
+            except ValueError:
+                return None
         if len(partes) == 2:
             try:
                 dia, mes = int(partes[0]), int(partes[1])
@@ -236,7 +243,7 @@ try:
         if not any(c.strip() for c in linha_s[:4]):
             continue
         valor_gasto = parse_valor(linha_s[3])
-        categoria = linha_s[2].strip().upper() or 'SEM CATEGORIA'
+        categoria = ' '.join(linha_s[2].split()).upper() or 'SEM CATEGORIA'  # junta espaços duplos
         data_gasto = parse_data_entrega(linha_s[0], agora)
         chave_g = (data_gasto.year, data_gasto.month) if data_gasto else None
         if chave_g:
